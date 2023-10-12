@@ -1,0 +1,74 @@
+
+NET "MSX_CLK" 				LOC = "27";
+NET "MSX_nCS1" 			LOC = "36";
+NET "MSX_nSLTSL" 			LOC = "56";
+NET "MSX_nRD" 				LOC = "58";
+NET "MSX_nWR" 				LOC = "59";
+
+NET "MSX_A[0]" 		LOC = "33";
+NET "MSX_A[1]" 		LOC = "35";
+NET "MSX_A[2]" 		LOC = "37";
+NET "MSX_A[3]" 		LOC = "40";
+NET "MSX_A[4]" 		LOC = "41";
+NET "MSX_A[5]" 		LOC = "43";
+NET "MSX_A[6]" 		LOC = "49";
+NET "MSX_A[7]" 		LOC = "52";
+NET "MSX_A[8]" 		LOC = "46";
+NET "MSX_A[9]" 		LOC = "42";
+NET "MSX_A[10]" 		LOC = "34";
+NET "MSX_A[11]" 		LOC = "39";
+NET "MSX_A[12]" 		LOC = "53";
+NET "MSX_A[13]" 		LOC = "50";
+NET "MSX_A[14]" 		LOC = "54";
+NET "MSX_A[15]" 		LOC = "55";
+
+NET "MSX_D[0]" 		LOC = "30";
+NET "MSX_D[1]" 		LOC = "16";
+NET "MSX_D[2]" 		LOC = "14";
+NET "MSX_D[3]" 		LOC = "12";
+NET "MSX_D[4]" 		LOC = "18";
+NET "MSX_D[5]" 		LOC = "15";
+NET "MSX_D[6]" 		LOC = "29";
+NET "MSX_D[7]" 		LOC = "32";
+
+
+NET "SRAM_Addr[0]" 		LOC = "73";
+NET "SRAM_Addr[1]" 		LOC = "78";
+NET "SRAM_Addr[2]" 		LOC = "79";
+NET "SRAM_Addr[3]" 		LOC = "80";
+NET "SRAM_Addr[4]" 		LOC = "81";
+NET "SRAM_Addr[5]" 		LOC = "82";
+NET "SRAM_Addr[6]" 		LOC = "85";
+NET "SRAM_Addr[7]" 		LOC = "95";
+NET "SRAM_Addr[8]" 		LOC = "60";
+NET "SRAM_Addr[9]" 		LOC = "96";
+NET "SRAM_Addr[10]" 		LOC = "76";
+NET "SRAM_Addr[11]" 		LOC = "94";
+NET "SRAM_Addr[12]" 		LOC = "77";
+NET "SRAM_Addr[13]" 		LOC = "87";
+NET "SRAM_Addr[14]" 		LOC = "89";
+NET "SRAM_Addr[15]" 		LOC = "90";
+NET "SRAM_Addr[16]" 		LOC = "91";
+NET "SRAM_Addr[17]" 		LOC = "92";
+NET "SRAM_Addr[18]" 		LOC = "93";
+
+NET "SRAM_Data[0]" 		LOC = "65";
+NET "SRAM_Data[1]" 		LOC = "66";
+NET "SRAM_Data[2]" 		LOC = "67";
+NET "SRAM_Data[3]" 		LOC = "68";
+NET "SRAM_Data[4]" 		LOC = "70";
+NET "SRAM_Data[5]" 		LOC = "71";
+NET "SRAM_Data[6]" 		LOC = "72";
+NET "SRAM_Data[7]" 		LOC = "10";
+NET "SRAM_OE" 			LOC = "63";
+NET "SRAM_WE" 			LOC = "64";
+NET "SRAM_CS" 			LOC = "20";
+
+
+NET "SPI_CS" 			LOC = "23";
+NET "SPI_MOSI" 		LOC = "97";
+NET "SPI_MISO" 		LOC = "6";
+NET "SPI_CLK" 			LOC = "22";
+NET "RAM_LOAD" 		LOC = "1";
+NET "RAM_nWR" 			LOC = "86";
+NET "nFDC_CS" 			LOC = "7";
