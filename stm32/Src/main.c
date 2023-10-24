@@ -57,6 +57,9 @@
 #include "oem6x8.h"
 /* USER CODE END Includes */
 
+//#define NO_SRAM_CHIP
+
+
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
@@ -295,6 +298,7 @@ int main(void)
 	int MenuDisk = 1;	// 0 - A, 1 - B
 	int MenuType = 0; // 0 - DSK emu, 1 - ROM loader
 	int MenuPos = 0;
+	int MapperType = 0;
 	
   /* USER CODE END 1 */
 
@@ -339,17 +343,17 @@ int main(void)
 		//		11 - konami SCC
 
 
-	if( MenuType == 0 ){		// floppy emu	
-		SPITXRX(0x0000 );	// no mapper
-		SPITXRX(0x0000 );	// no mapper
-		SPITXRX(0x0000 );	// no mapper
-		SPITXRX(0x0000 );	// no mapper
-		SPITXRX(0x0000 );	// no mapper
-		SPITXRX(0x0000 );	// no mapper
-	}else{
-		SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );
+//	if( MenuType == 0 ){		// floppy emu	
+//		SPITXRX(0x0000 );	// no mapper
+//		SPITXRX(0x0000 );	// no mapper
+//		SPITXRX(0x0000 );	// no mapper
+//		SPITXRX(0x0000 );	// no mapper
+//		SPITXRX(0x0000 );	// no mapper
+		//SPITXRX(0x0000 );	// no mapper
+//	}else{
+//		SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );
 		//SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );
-	}
+//	}
 
 	
 	//SPITXRX( 0x8000  | 0x80 | 0x20 );							// Data Register
@@ -363,7 +367,7 @@ int main(void)
 				HAL_Delay( 3000 );
 				OSDDisable( 0 );	
 
-
+reboot:
 	disk_initialize(USERFatFS.drv);
 	res = f_mount( &USERFatFS, (TCHAR const*)USERPath, 0 );
 	if( res != FR_OK ){
@@ -418,6 +422,7 @@ int main(void)
 		// ---------------------------------------------	
 		// read BIOS to SRAM chip
 		if( res == FR_OK ){
+#ifndef NO_SRAM_CHIP
 			res = f_open(&handleA, "TDC600.rom", FA_READ);
 			//res = f_open(&handleA, "ROM\\testram.rom", FA_READ);
 			//res = f_open(&handleA, "ROM\\XBasic.rom", FA_READ);
@@ -435,6 +440,7 @@ int main(void)
 				ROMload( filesize );
 				res = f_close( &handleA );
 			}
+#endif
 		}
 
 		
@@ -462,7 +468,7 @@ int main(void)
 					OSDDisable( 0 );	
 		}		
 
-		//SPITXRX(0x0000 );	// no mapper
+		SPITXRX(0x0000 );	// no mapper
 		// enable FDC_CS
 		HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(EXTI3_IRQn);
@@ -480,8 +486,9 @@ int main(void)
   /* USER CODE BEGIN 3 */
 		//---------------------------------------------------------------
 		// keys
-		if( (GPIOC->IDR & GPIO_PIN_14) == (uint32_t)GPIO_PIN_RESET ){
-			if( MenuType == 0 ){
+		if( (GPIOC->IDR & GPIO_PIN_14) == (uint32_t)GPIO_PIN_RESET ){											// enter
+			while( (GPIOC->IDR & GPIO_PIN_14) == (uint32_t)GPIO_PIN_RESET );			
+			if( MenuType == 0 ){//-------
 				if( MenuDisk == 0 ){
 					MenuDisk = 1;
 					sprintf( textA, "B>" );
@@ -498,23 +505,92 @@ int main(void)
 					if( (GPIOC->IDR & GPIO_PIN_13) == (uint32_t)GPIO_PIN_RESET )break;
 				}
 				OSDDisable( 1 );
-			}else{
+			}else{//-------
+				MapperType++;
+				if( MapperType == 4 ) MapperType = 1;
+				sprintf( textB, "  %s", "NONE" );
+				sprintf( textC, "  %s", "KONAMI" );
+				sprintf( textD, "  %s", "KONAMI SCC" );
+				switch( MapperType ){
+						case 1:textB[0] = '>';break;
+						case 2:textC[0] = '>';break;
+						case 3:textD[0] = '>';break;
+				}
+				OSDText( "MAPPER:", textB, textC, textD );
+				OSDEnable();
+				for( i = 0; i < 200; i++){
+					HAL_Delay( 10 );																													// debounce
+					if( (GPIOC->IDR & GPIO_PIN_14) == (uint32_t)GPIO_PIN_RESET )break;
+				}
+				OSDDisable( 1 );
+				switch( MapperType ){
+						case 1:SPITXRX(0x0000 );HAL_Delay( 10 );SPITXRX(0x0000 );break;// no mapper. for 16kb games
+						case 2:SPITXRX(0x0000 );HAL_Delay( 10 );SPITXRX(0x2002 );break;// konami
+						case 3:SPITXRX(0x0000 );HAL_Delay( 10 );SPITXRX(0x2003 );break;// konamiSCC
+				}
 			}
-			//while( (GPIOC->IDR & GPIO_PIN_14) == (uint32_t)GPIO_PIN_RESET );
 		}
 		//--------------------------
-		if( (GPIOC->IDR & GPIO_PIN_13) == (uint32_t)GPIO_PIN_RESET ){
-			if( CurrentDisk )CurrentDisk--;
-			DiskChange = 1;
-			HAL_Delay( 10 );
-			while( (GPIOC->IDR & GPIO_PIN_13) == (uint32_t)GPIO_PIN_RESET );
+		if( (GPIOC->IDR & GPIO_PIN_13) == (uint32_t)GPIO_PIN_RESET ){										// down
+			i = 0;
+			while( (GPIOC->IDR & GPIO_PIN_13) == (uint32_t)GPIO_PIN_RESET ){				
+				if( (GPIOC->IDR & GPIO_PIN_15) == (uint32_t)GPIO_PIN_RESET ){								// both up & down pressed
+					i = 1;
+				}
+			};
+			if( i == 1 ){
+				OSDEnable();
+				if( MenuType ){
+					MenuType = 0;
+					OSDText( "TDC-600 MODE", "", "", "" );
+				}else{
+					MenuType = 1;
+					OSDText( "ROM", "MODE", "", "" );
+					HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+				}
+				HAL_Delay( 3000 );
+				OSDDisable( 1 );
+
+				f_close( &handleA );
+				f_close( &handleB );		
+				f_mount( 0, (TCHAR const*)USERPath, 0 );
+				goto reboot;
+			}else{
+				if( CurrentDisk )CurrentDisk--;
+				DiskChange = 1;
+				HAL_Delay( 10 );
+			}
 		}
 		//--------------------------
-		if( (GPIOC->IDR & GPIO_PIN_15) == (uint32_t)GPIO_PIN_RESET ){
-			if( CurrentDisk < FilesInDir )CurrentDisk++;
-			DiskChange = 1;
-			HAL_Delay( 10 );
-			while( (GPIOC->IDR & GPIO_PIN_15) == (uint32_t)GPIO_PIN_RESET );
+		if( (GPIOC->IDR & GPIO_PIN_15) == (uint32_t)GPIO_PIN_RESET ){										// up
+			i = 0;
+			while( (GPIOC->IDR & GPIO_PIN_15) == (uint32_t)GPIO_PIN_RESET ){
+				if( (GPIOC->IDR & GPIO_PIN_13) == (uint32_t)GPIO_PIN_RESET ){								// both up & down pressed
+					i = 1;
+				}
+			};
+			if( i == 1 ){
+				OSDEnable();
+				if( MenuType ){
+					MenuType = 0;
+					OSDText( "TDC-600 MODE", "", "", "" );
+				}else{
+					MenuType = 1;
+					OSDText( "ROM", "MODE", "", "" );
+					HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+				}
+				HAL_Delay( 3000 );
+				OSDDisable( 1 );
+
+				f_close( &handleA );
+				f_close( &handleB );		
+				f_mount( 0, (TCHAR const*)USERPath, 0 );
+				goto reboot;
+			}else{
+				if( CurrentDisk < FilesInDir )CurrentDisk++;
+				DiskChange = 1;
+				HAL_Delay( 10 );
+			}
 		}
 		//--------------------------
 		if( DiskChange == 1 ){
@@ -599,12 +675,14 @@ int main(void)
 				}
 				OSDDisable( 0 );
 				HAL_NVIC_DisableIRQ(EXTI3_IRQn);
-				SPITXRX(0x0000 );//SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );
+				//SPITXRX(0x0000 );//SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );SPITXRX(0x0000 );
 				//SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );SPITXRX(0x2002 );
-			
-				SPITXRX(0x2002 );			// konami
-				//SPITXRX(0x2003 );				// konamiSCC
-				//SPITXRX(0x0000 );			// no mapper. for 16kb games
+
+				switch( MapperType ){
+						case 1:SPITXRX(0x0000 );HAL_Delay( 10 );SPITXRX(0x0000 );break;// no mapper. for 16kb games
+						case 2:SPITXRX(0x0000 );HAL_Delay( 10 );SPITXRX(0x2002 );break;// konami
+						case 3:SPITXRX(0x0000 );HAL_Delay( 10 );SPITXRX(0x2003 );break;// konamiSCC
+				}
 			}
 
 
@@ -802,7 +880,9 @@ static void MX_SPI1_Init(void)
   hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
 	//hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+	//hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;				// CPOL
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+	//hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;						// CPHA
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
 	//hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
@@ -813,6 +893,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CRCPolynomial = 10;
   HAL_SPI_Init(&hspi1);
 
+	//SPI1->CR1 |= SPI_CR1_CPOL | SPI_CR1_CPHA;
 }
 
 /* SPI2 init function */
