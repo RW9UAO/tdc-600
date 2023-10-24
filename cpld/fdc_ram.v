@@ -64,10 +64,10 @@ module fdc_ram(
 
 	
 	wire [18:13]MA;
-	reg [5:0]HC670_0;
-	reg [5:0]HC670_1;
-	reg [5:0]HC670_2;
-	reg [5:0]HC670_3;
+	reg [4:0]HC670_0;
+	reg [4:0]HC670_1;
+	reg [4:0]HC670_2;
+	reg [4:0]HC670_3;
 	wire nHC670WR;
 	wire [1:0]HC670AB;
 	
@@ -80,9 +80,9 @@ module fdc_ram(
 	assign sel2   = ( nwdcs == 1'b0 && MSX_nRD == 1'b0 ) ? 1'b1 : 1'b0;
 	assign nLDOR  = ( MSX_A[13:12] == 2'b01 && sel1 ) ? 1'b0 : 1'b1;
 	assign MSX_D  = 
-// mapper
+// mapper, need to be removed in ROM only version
 						( ( MAPPER == 1'b1 && RAM_LOAD == 1'b0 && SRAM_CS == 1'b0 && SRAM_OE == 1'b0 ) || 
-// TDC-600
+// TDC-600, need to be removed in ROM only version
 						( MSX_nCS1 == 1'b0 && MSX_nSLTSL == 1'b0 && RAM_LOAD == 1'b0 ) ) ? SRAM_Data :
 						( sel2 && MSX_A[0] == 1'b0 )	? WD_stat :
 						( sel2 && MSX_A[0] == 1'b1 )	? WD_data : 8'bZZZZZZZ;
@@ -97,7 +97,8 @@ module fdc_ram(
 
 
 	assign HC670AB[1:0] = {MSX_A[15], MSX_A[13]};
-	assign MA[18:13] = ( HC670AB == 2'b00 ) ? HC670_0 :
+	assign MA[18] = 1'b0;
+	assign MA[17:13] = ( HC670AB == 2'b00 ) ? HC670_0 :
 					( HC670AB == 2'b01) ? HC670_1 :
 					( HC670AB == 2'b10) ? HC670_2 : HC670_3;
 
@@ -105,18 +106,23 @@ module fdc_ram(
 		if( nHC670WR == 1'b0 )begin
 			case( HC670AB )
 				2'b00:begin
-					HC670_0 <= MSX_D[5:0];
+					HC670_0 <= MSX_D[4:0];
 					end
 				2'b01:begin
-					HC670_1 <= MSX_D[5:0];
+					HC670_1 <= MSX_D[4:0];
 					end
 				2'b10:begin
-					HC670_2 <= MSX_D[5:0];
+					HC670_2 <= MSX_D[4:0];
 					end
 				2'b11:begin
-					HC670_3 <= MSX_D[5:0];
+					HC670_3 <= MSX_D[4:0];
 					end
 			endcase
+		end else if( MAPPER == 1'b0 )begin
+			HC670_0 <= 5'b00000 ;
+			HC670_1 <= 5'b00000 ;
+			HC670_2 <= 5'b00000 ;
+			HC670_3 <= 5'b00000 ;
 		end
 	end
 
@@ -143,14 +149,14 @@ module fdc_ram(
 
 reg [5:0]cnt;
 	// SPI output data multiplexor
-	assign SPI_MISO = (cnt == 0 ) ? spi_dataR[15] :
+	assign SPI_MISO = (cnt == 0  ) ? spi_dataR[15] : // do not change to 1'b1
 							(cnt == 1  ) ? spi_dataR[14] :
 							(cnt == 2  ) ? spi_dataR[13] :
 							(cnt == 3  ) ? spi_dataR[12] :
 							(cnt == 4  ) ? spi_dataR[11] :
-							(cnt == 5  ) ? spi_dataR[10] :
-							(cnt == 6  ) ? spi_dataR[9] :
-							(cnt == 7  ) ? spi_dataR[8] :
+							(cnt == 5  ) ? spi_dataR[10] : // do not change to 1'b0
+							(cnt == 6  ) ? spi_dataR[9] :  // do not change to 1'b0
+							(cnt == 7  ) ? spi_dataR[8] :  // do not change to 1'b0
 							(cnt == 8  ) ? spi_dataR[7] :
 							(cnt == 9  ) ? spi_dataR[6] :
 							(cnt == 10 ) ? spi_dataR[5] :
@@ -200,6 +206,7 @@ always@( negedge MSX_CLK )begin
 				spi_dataR[12] <= MSX_nWR;
 				spi_dataR[11] <= MSX_nRD;
 				spi_dataR[10:8] <= 3'b000;	// free bits
+			
 				// MSX write WD37C65C data or LDOR reg 
 				spi_dataR[7:0] <= MSX_D[7:0];
 	end
